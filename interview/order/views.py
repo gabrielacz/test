@@ -7,8 +7,9 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
-from datetime import datetime
+
 from django.utils.dateparse import parse_datetime
+
 
 # Create your views here.
 class OrderListCreateView(generics.ListCreateAPIView):
@@ -41,3 +42,11 @@ class DeactivateOrderView(APIView):
         order.is_active = False
         order.save()
         return Response({'status': 'Order deactivated'}, status=status.HTTP_200_OK)
+    
+class OrderTagsView(APIView):
+    def get(self, request, order_id):
+        order = get_object_or_404(Order, pk=order_id)
+        tags = order.tags.all()
+        serializer = OrderTagSerializer(tags, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
