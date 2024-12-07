@@ -1,3 +1,4 @@
+from datetime import datetime
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.views import APIView
@@ -27,9 +28,19 @@ class InventoryListCreateView(APIView):
         return Response(serializer.data, status=201)
     
     def get(self, request: Request, *args, **kwargs) -> Response:
-        serializer = self.serializer_class(self.get_queryset(), many=True)
-        
+        date_str = request.query_params.get('created_after', None)
+        if date_str:
+                try:
+                    created_after = datetime.strptime(date_str, '%Y-%m-%d')
+                    queryset = self.get_queryset().filter(created_at__gt=created_after)
+                except ValueError:
+                    return Response({'error': 'Invalid date format. Use YYYY-MM-DD.'}, status=400)
+        else:
+                queryset = self.get_queryset()
+            
+        serializer = self.serializer_class(queryset, many=True)
         return Response(serializer.data, status=200)
+            
     
     def get_queryset(self):
         return self.queryset.all()
