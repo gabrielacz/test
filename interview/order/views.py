@@ -7,12 +7,29 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
+from datetime import datetime
+from django.utils.dateparse import parse_datetime
 
 # Create your views here.
 class OrderListCreateView(generics.ListCreateAPIView):
-    queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    
+
+    def get_queryset(self):
+        queryset = Order.objects.all()
+        start_date = self.request.query_params.get('start_date', None)
+        embargo_date = self.request.query_params.get('embargo_date', None)
+        
+        if start_date:
+            start_date = parse_datetime(start_date)
+            if start_date:
+                queryset = queryset.filter(created_at__gte=start_date)
+        
+        if embargo_date:
+            embargo_date = parse_datetime(embargo_date)
+            if embargo_date:
+                queryset = queryset.filter(created_at__lte=embargo_date)
+        
+        return queryset
 
 class OrderTagListCreateView(generics.ListCreateAPIView):
     queryset = OrderTag.objects.all()
